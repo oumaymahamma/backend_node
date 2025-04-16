@@ -10,7 +10,11 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
+const courseRoutes = require('./routes/course');
+app.use('/api/courses', courseRoutes);
 
+
+app.use('/uploads', express.static('uploads'));
 // Connexion à MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
