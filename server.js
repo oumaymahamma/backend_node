@@ -12,10 +12,11 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 const courseRoutes = require('./routes/course');
 app.use('/api/courses', courseRoutes);
+const quizRoutes = require('./routes/quiz');
+app.use('/api/quiz', quizRoutes);
 
 
 app.use('/uploads', express.static('uploads'));
-// Connexion à MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     app.listen(process.env.PORT, () => {
