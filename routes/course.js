@@ -14,7 +14,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-
 router.post('/add', authenticate, authorize(['enseignant']), upload.single('pdf'), async (req, res) => {
   const { nomCours, matiere } = req.body;
   const professeur = req.user.username;
@@ -27,9 +26,20 @@ router.post('/add', authenticate, authorize(['enseignant']), upload.single('pdf'
   });
 
   await course.save();
+  const Notification = require('../models/Notification');
+
+  await Notification.create({
+    message: `Un nouveau cours a été ajouté par ${professeur}`
+  });
+  
+  // Émettre une notification via WebSocket à tous les étudiants
+  req.io.emit('nouveau-cours', {
+    message: `Un nouveau cours a été ajouté par ${professeur}`,
+    nomCours,
+  });
+
   res.json({ message: 'Cours ajouté avec succès' });
 });
-
 
 router.get('/', authenticate, authorize(['enseignant','etudiant']), async (req, res) => {
   const courses = await Course.find();
@@ -100,6 +110,15 @@ router.delete('/:id', authenticate, authorize(['enseignant']), async (req, res) 
     res.status(200).json({ message: 'Cours supprimé avec succès' });
   } catch (error) {
     console.error('Erreur lors de la suppression du cours :', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+router.get('/notifications', authenticate, authorize(['etudiant', 'enseignant']), async (req, res) => {
+  try {
+    const notifications = await Notification.find().sort({ timestamp: -1 });
+    res.json(notifications);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des notifications:', error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
